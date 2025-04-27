@@ -6,6 +6,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+    .gradient-text {
+      @apply bg-gradient-to-r from-indigo-600 to-purple-600 hover:hue-rotate-60 duration-700 bg-clip-text text-transparent;
+    }
+}
+
 /* Custom scrollbar styles */
 ::-webkit-scrollbar {
     width: 8px;
@@ -25,7 +31,6 @@
     background: #818cf8;
 }
 
-/* Smooth scrolling */
 html {
     scroll-behavior: smooth;
 }
