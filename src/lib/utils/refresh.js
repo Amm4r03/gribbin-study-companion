@@ -17,11 +17,25 @@ export function initializeRefreshHandlers() {
     });
 
     // Refresh data when online status changes
-    window.addEventListener('online', refreshAllData);
+    // window.addEventListener('online', refreshAllData);
 }
 
 export function refreshAllData() {
-    courses.refresh();
-    roadmaps.refresh();
-    userStats.refresh();
+    if (!browser) return;
+
+    // Refresh each store
+    courses.subscribe(() => {console.log("Refreshing courses...")});
+    roadmaps.subscribe(() => {console.log("Refreshing roadmaps...")});
+    userStats.subscribe(() => {console.log("Refreshing user stats...")});
+    // courses.refresh();
+    // roadmaps.refresh();
+    // userStats.refresh();
+    // Update last refresh time
+    lastRefresh = Date.now();
 }
+
+// export function refreshAllData() {
+//     courses.refresh();
+//     roadmaps.refresh();
+//     userStats.refresh();
+// }
