@@ -2,6 +2,7 @@
     import Sidebar from "$lib/components/sidebar.svelte";
     import { user } from '$lib/stores/auth';
     import { supabase } from '$lib/supabase';
+    import { goto } from "$app/navigation";
     import LandingFeatureCard from "$lib/components/landingFeatureCard.svelte";
     import Button from "$lib/components/Button.svelte";
 
@@ -9,33 +10,45 @@
         [
             {
                 title: "Smart Course Management",
+                alt_title: "Course Management",
                 description: "Organize your courses, syllabi, and materials in one place with AI-powered insights.",
-                icon: "📚"
+                icon: "📚",
+                href: "/courses"
             },
             {
                 title: "AI Learning Roadmaps",
+                alt_title: "Your Roadmaps",
                 description: "Generate personalized study paths from your course materials and track your progress.",
-                icon: "🗺️"
+                icon: "🗺️",
+                href: "/roadmaps"
             },
             {
                 title: "Smart Study Timer",
+                alt_title: "Pomodoro Timer",
                 description: "Stay focused with our Pomodoro timer and get insights into your study patterns.",
-                icon: "⏱️"
+                icon: "⏱️",
+                href: "/pomodoro"
             },
             {
                 title: "Intelligent Flashcards",
+                alt_title: "Your Flashcards",
                 description: "Create and review flashcards with AI-generated questions to enhance retention.",
-                icon: "🧠"
+                icon: "🧠",
+                href: "/flashcards"
             },
             {
                 title: "Productivity Analytics",
+                alt_title: "Your Analytics",
                 description: "Get insights into your study habits and improve your productivity over time.",
-                icon: "📊"
+                icon: "📊",
+                href: "/analytics"
             },
             {
                 title : "Task Management",
+                alt_title: "Your Tasks",
                 description: "Organize your tasks and assignments with a built-in task manager.",
-                icon: "📝"
+                icon: "📝",
+                href: "/tasks"
             }
         ];
 
@@ -115,10 +128,24 @@
                 </div>
             </div>
         </div>
+
+        <!-- simple footer for landing page -->
+        <footer class="text-indigo-500 py-6">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <p class="mt-4 block bg-gradient-to-r from-indigo-600 to-purple-600 hover:hue-rotate-60 duration-700 bg-clip-text text-transparent text-center select-none font-normal"><b class="font-semibold">Gribbin</b> | made with &hearts; by Ammar | {new Date().getFullYear()}</p>
+            </div>
     </div>
 {:else}
+<!-- landing screen when the user signs in -->
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <h1 class="text-2xl font-semibold text-gray-900">Welcome back!</h1>
         <p class="mt-2 text-gray-600">Continue your learning journey from where you left off.</p>
+        <div class="grid grid-cols-1 gap-6 mt-8 sm:grid-cols-2 lg:grid-cols-3">
+            {#each features as ft}
+                <button class="hover:cursor-pointer" onclick={goto(ft.href)}>
+                    <LandingFeatureCard title={ft.alt_title} icon={ft.icon}/>
+                </button>
+            {/each}
+        </div>
     </div>
 {/if}
