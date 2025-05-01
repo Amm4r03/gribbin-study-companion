@@ -4,22 +4,40 @@
     import { roadmaps } from '$lib/stores/data';
     import { onMount } from 'svelte';
     import RoadmapModule from '$lib/components/RoadmapModule.svelte';
-    import StatsFooter from '$lib/components/StatsFooter.svelte';
+    import { user } from "$lib/stores/auth";
+    import { fade } from 'svelte/transition';
+
+    let currentUserId = null;
+    user.subscribe(value => currentUserId = value?.id);
 
     let roadmap = null;
     let loading = true;
     let error = null;
     let totalProgress = 0;
+    let parsedContent = null;
+    let showCreateFlashcards = false;
+    let selectedTopic = null;
 
     // Find roadmap in cache or fetch from API
     $: {
         const cachedRoadmap = $roadmaps.find(r => r.id === $page.params.id);
         if (cachedRoadmap) {
             roadmap = cachedRoadmap;
+            parsedContent = parseRoadmapContent();
             calculateTotalProgress();
             loading = false;
         } else {
             loadRoadmap();
+        }
+    }
+
+    function parseRoadmapContent() {
+        if (!roadmap?.description) return null;
+        try {
+            return typeof roadmap.description === 'string' ? 
+                JSON.parse(roadmap.description) : roadmap.description;
+        } catch {
+            return null;
         }
     }
 
@@ -32,14 +50,17 @@
                 .select(`
                     *,
                     course:courses (
-                        title
-                    )
+                        title,
+                        syllabus_text
+                    ),
+                    flashcard_sets (*)
                 `)
                 .eq('id', $page.params.id)
                 .single();
 
             if (err) throw err;
             roadmap = data;
+            parsedContent = parseRoadmapContent();
             calculateTotalProgress();
         } catch (err) {
             error = err.message;
@@ -50,25 +71,19 @@
     }
 
     function calculateTotalProgress() {
-        if (!roadmap?.content) return;
+        if (!parsedContent?.modules) return;
 
-        try {
-            const content = JSON.parse(roadmap.content);
-            let totalTopics = 0;
-            let completedTopics = 0;
+        let totalTopics = 0;
+        let completedTopics = 0;
 
-            content.modules?.forEach(module => {
-                totalTopics += module.keyTopics?.length || 0;
-                if (roadmap.progress?.[module.order]) {
-                    completedTopics += Object.values(roadmap.progress[module.order]).filter(Boolean).length;
-                }
-            });
+        parsedContent.modules.forEach(module => {
+            totalTopics += module.keyTopics?.length || 0;
+            if (roadmap.progress?.[module.order]) {
+                completedTopics += Object.values(roadmap.progress[module.order]).filter(Boolean).length;
+            }
+        });
 
-            totalProgress = totalTopics > 0 ? (completedTopics / totalTopics) * 100 : 0;
-        } catch (err) {
-            console.error('Error calculating progress:', err);
-            totalProgress = 0;
-        }
+        totalProgress = totalTopics > 0 ? (completedTopics / totalTopics) * 100 : 0;
     }
 
     async function handleModuleProgress(event) {
@@ -81,15 +96,17 @@
                 [moduleOrder]: progress
             };
 
+            // Optimistic update
+            roadmap.progress = updatedProgress;
+            calculateTotalProgress();
+
+            // Update database
             const { error: err } = await supabase
                 .from('roadmaps')
                 .update({ progress: updatedProgress })
                 .eq('id', roadmap.id);
 
             if (err) throw err;
-
-            roadmap.progress = updatedProgress;
-            calculateTotalProgress();
             
             // Update cache
             roadmaps.update(maps => 
@@ -98,8 +115,50 @@
         } catch (err) {
             error = err.message;
             console.error('Error updating progress:', err);
+            // Revert optimistic update if failed
+            await loadRoadmap();
         }
     }
+
+    async function createFlashcards() {
+        if (!selectedTopic) return;
+
+        try {
+            const module = parsedContent.modules.find(m => m.title === selectedTopic);
+            if (!module) return;
+
+            const { data, error: err } = await supabase
+                .from('flashcard_sets')
+                .insert({
+                    user_id: currentUserId,
+                    title: `${selectedTopic} - Flashcards`,
+                    description: module.description,
+                    course_id: roadmap.course_id,
+                    roadmap_item_id: roadmap.id
+                })
+                .select()
+                .single();
+
+            if (err) throw err;
+
+            // Redirect to flashcards page
+            window.location.href = '/flashcards';
+        } catch (err) {
+            error = err.message;
+            console.error('Error creating flashcard set:', err);
+        }
+    }
+
+    onMount(() => {
+        if (!currentUserId) {
+            error = "You must be logged in to view this roadmap.";
+            return;
+        }
+
+        if (!roadmap) {
+            loadRoadmap();
+        }
+    });
 </script>
 
 <div class="space-y-8">
@@ -108,7 +167,7 @@
             <div class="h-8 w-8 animate-spin rounded-full border-b-2 border-indigo-600"></div>
         </div>
     {:else if error}
-        <div class="rounded-md bg-red-50 p-4">
+        <div class="rounded-md bg-red-50 p-4" transition:fade>
             <div class="flex">
                 <div class="flex-shrink-0">
                     <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -130,23 +189,67 @@
                 </div>
             </div>
         </div>
-    {:else if roadmap}
+    {:else if roadmap && parsedContent}
         <!-- Roadmap Header -->
         <div>
             <div class="flex items-start justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">{roadmap.title}</h1>
-                    {#if roadmap.course}
+                    {#if roadmap.course?.title}
                         <p class="mt-1 text-lg text-indigo-600">From: {roadmap.course.title}</p>
                     {/if}
                 </div>
-                <a
-                    href="/roadmaps"
-                    class="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
-                >
-                    Back to Roadmaps
-                </a>
+                <div class="flex gap-4">
+                    <button
+                        on:click={() => showCreateFlashcards = !showCreateFlashcards}
+                        class="rounded-md bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-600 hover:bg-indigo-100"
+                    >
+                        Create Flashcards
+                    </button>
+                    <a
+                        href="/roadmaps"
+                        class="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                    >
+                        Back to Roadmaps
+                    </a>
+                </div>
             </div>
+
+            <!-- Create Flashcards Dialog -->
+            {#if showCreateFlashcards}
+                <div class="mt-6 rounded-lg bg-white p-6 shadow-sm" transition:fade>
+                    <h3 class="text-lg font-semibold text-gray-900">Create Flashcards</h3>
+                    <p class="mt-2 text-sm text-gray-500">
+                        Select a topic to generate flashcards for studying.
+                    </p>
+                    <div class="mt-4">
+                        <select
+                            bind:value={selectedTopic}
+                            class="block w-full rounded-md border border-gray-300 px-3 py-2"
+                        >
+                            <option value="">Select a topic...</option>
+                            {#each parsedContent.modules as module}
+                                <option value={module.title}>{module.title}</option>
+                            {/each}
+                        </select>
+                        <div class="mt-4 flex justify-end gap-4">
+                            <button
+                                on:click={() => showCreateFlashcards = false}
+                                class="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                on:click={createFlashcards}
+                                disabled={!selectedTopic}
+                                class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50"
+                            >
+                                Create Flashcards
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {/if}
 
             <!-- Overall Progress -->
             <div class="mt-6 rounded-lg bg-white p-6 shadow-sm">
@@ -164,35 +267,16 @@
         </div>
 
         <!-- Modules -->
-        {#if roadmap.content}
-            {#try}
-                {@const content = JSON.parse(roadmap.content)}
-                <div class="space-y-8">
-                    {#each content.modules as module (module.order)}
-                        <RoadmapModule 
-                            {module}
-                            roadmapId={roadmap.id}
-                            progress={roadmap.progress?.[module.order] || {}}
-                            on:updateProgress={handleModuleProgress}
-                        />
-                    {/each}
-                </div>
-            {:catch err}
-                <div class="rounded-md bg-yellow-50 p-4">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-yellow-800">Invalid roadmap content</h3>
-                            <p class="mt-2 text-sm text-yellow-700">This roadmap's content appears to be corrupted. Try regenerating it from the course page.</p>
-                        </div>
-                    </div>
-                </div>
-            {/try}
-        {/if}
+        <div class="space-y-8">
+            {#each parsedContent.modules as module (module.order)}
+                <RoadmapModule 
+                    {module}
+                    roadmapId={roadmap.id}
+                    progress={roadmap.progress?.[module.order] || {}}
+                    on:updateProgress={handleModuleProgress}
+                />
+            {/each}
+        </div>
     {:else}
         <div class="rounded-md bg-yellow-50 p-4">
             <p class="text-sm text-yellow-700">Roadmap not found.</p>
@@ -205,5 +289,3 @@
         </div>
     {/if}
 </div>
-
-<StatsFooter />
