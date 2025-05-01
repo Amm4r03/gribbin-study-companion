@@ -33,7 +33,7 @@
 <!-- Mobile Toggle Button -->
 <button 
   class="fixed top-4 left-4 z-50 md:hidden bg-indigo-600 text-white p-2 rounded-lg"
-  on:click={toggleSidebar}
+  onclick={toggleSidebar}
   aria-label="Toggle Sidebar"
 >
   {isSidebarOpen ? '✕' : '☰'}
@@ -54,6 +54,7 @@
     {#each navItems as { href, label, icon }}
       <a
         {href}
+        onclick={toggleSidebar}
         class={`mb-2 flex items-center rounded-lg p-3 text-gray-700 transition-colors hover:bg-indigo-50 hover:text-indigo-600
           ${$page.url.pathname === href ? 'bg-indigo-50 text-indigo-600' : ''}`}
       >
@@ -94,7 +95,7 @@
         <p class="text-sm font-medium text-gray-700 hover:text-indigo-600">{$user?.email}</p>
         <button 
           class="text-xs text-gray-500 hover:text-indigo-600 hover:cursor-pointer"
-          on:click={handleSignOut}
+          onclick={handleSignOut}
         >
           Sign Out
         </button>
@@ -105,8 +106,11 @@
 
 <!-- Overlay for mobile -->
 {#if isSidebarOpen}
-  <div
+  <button
+    type="button"
     class="fixed inset-0 z-30 bg-gray-600 bg-opacity-50 md:hidden"
-    on:click={toggleSidebar}
-  ></div>
+    onclick={toggleSidebar}
+    onkeydown={e => e.key === 'Escape' && toggleSidebar()}
+    aria-label="Close sidebar overlay"
+  ></button>
 {/if}
