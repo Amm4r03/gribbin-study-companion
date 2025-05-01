@@ -44,6 +44,33 @@
     }
 </script>
 
+<div class="fixed inset-0 overflow-hidden">
+    <div class="absolute top-1/4 left-1/4 h-96 w-96 animate-blob rounded-full bg-indigo-600 opacity-30 mix-blend-multiply blur-3xl"/>
+    <div class="animation-delay-2000 absolute top-1/3 right-1/4 h-96 w-96 animate-blob rounded-full bg-indigo-600 hue-rotate-60 opacity-30 mix-blend-multiply blur-3xl"/>
+    <div class="animation-delay-4000 absolute -bottom-8 left-1/2 h-96 w-96 animate-blob rounded-full bg-indigo-300 hue-rotate-90 opacity-30 mix-blend-multiply blur-3xl"/>
+</div>
+
+<style>
+    @keyframes blob {
+        0% { transform: translate(0px, 0px) scale(1); }
+        33% { transform: translate(30px, -50px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+        100% { transform: translate(0px, 0px) scale(1); }
+    }
+    
+    .animate-blob {
+        animation: blob 7s infinite;
+    }
+    
+    .animation-delay-2000 {
+        animation-delay: 2s;
+    }
+    
+    .animation-delay-4000 {
+        animation-delay: 4s;
+    }
+</style>
+
 <div class="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-purple-100 px-4 py-12 sm:px-6 lg:px-8">
     <div class="w-full max-w-md">
         <div class="rounded-2xl bg-white/60 p-8 shadow-lg backdrop-blur-sm">
