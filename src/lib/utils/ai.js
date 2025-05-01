@@ -29,134 +29,164 @@ function saveToCache(key, data) {
     }));
 }
 
-export async function generateLearningRoadmap(syllabusText) {
-    const cacheKey = `roadmap_${btoa(syllabusText.slice(0, 100))}`;
+export async function validateRoadmapRequest(params) {
+    const errors = [];
+    
+    if (!params.syllabusText && !params.subject) {
+        errors.push('Either syllabus text or subject is required');
+    }
+
+    if (params.timeline) {
+        const validTimelines = ['1 week', '2 weeks', '1 month', '2 months', '3 months', '6 months'];
+        if (!validTimelines.includes(params.timeline)) {
+            errors.push('Invalid timeline specified');
+        }
+    }
+
+    if (params.difficulty) {
+        const validDifficulties = ['beginner', 'intermediate', 'advanced'];
+        if (!validDifficulties.includes(params.difficulty)) {
+            errors.push('Invalid difficulty level');
+        }
+    }
+
+    return errors;
+}
+
+export async function generateLearningRoadmap(params) {
+    const errors = await validateRoadmapRequest(params);
+    if (errors.length > 0) {
+        throw new Error(errors.join(', '));
+    }
+
+    const cacheKey = `roadmap_${btoa((params.syllabusText || params.subject).slice(0, 100))}`;
     const cached = getFromCache(cacheKey);
     if (cached) return cached;
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
         const prompt = `
-        Based on the following course syllabus, create a detailed learning roadmap.
-        Break down the content into logical modules, each with specific learning objectives and key concepts.
-        For each key topic, suggest a relevant high-quality educational YouTube video or learning resource if applicable.
+        Generate a detailed list of topics based on the following requirements:
 
-        Format the response as a JSON object with the following structure:
+        Syllabus: ${params.syllabusText}
+        Subject: ${params.subject}
+        Class Level: ${params.classLevel || 'college'}
+        Target Exam: ${params.exam || 'general'}
+        Difficulty Level: ${params.difficulty || 'intermediate'}
+        Desired Timeline: ${params.timeline || '1 month'}
+        Prior Knowledge: ${params.priorKnowledge || 'none'}
+
+        Consider the difficulty, timeline, and prior knowledge when deciding the depth and breadth of topics
+        and subtopics. Adjust the estimated completion time for each topic based on the overall timeline and difficulty.
+
+        Each topic should contain:
+        - name: Name of the topic
+        - description: Brief explanation (1-2 sentences)
+        - subtopics: List of important sub-concepts
+        - completion_time: Estimated days to complete
+        - resources: List of recommended reading materials or online resources
+        - order: Sequential order in the learning path
+
+        Format the response as a JSON object with this structure:
         {
             "modules": [
                 {
-                    "title": "Module title",
-                    "description": "Brief description of the module",
-                    "learningObjectives": ["objective 1", "objective 2", ...],
-                    "keyTopics": ["topic 1", "topic 2", ...],
-                    "resources": ["https://youtube.com/...", null, "https://youtube.com/...", ...],
-                    "estimatedDuration": "X weeks",
-                    "order": 1
+                    "title": "topic name",
+                    "description": "brief explanation",
+                    "keyTopics": ["subtopic1", "subtopic2", ...],
+                    "resources": ["resource1", "resource2", ...],
+                    "estimatedDuration": "X days",
+                    "order": number
                 }
             ]
         }
-
-        Important guidelines for resource suggestions:
-        - Only include highly-rated educational content from reputable creators
-        - Prefer comprehensive tutorial videos over short clips
-        - Include resource URLs only if they directly explain the topic
-        - Match resources array length with keyTopics array length
-        - Use null for topics without a specific resource
-
-        Syllabus:
-        ${syllabusText}
         `;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
+
         
-        try {
-            const parsed = JSON.parse(text);
-            saveToCache(cacheKey, parsed);
-            return parsed;
-        } catch (e) {
-            throw new Error("Failed to parse AI response into valid JSON");
-        }
+        let parsed = JSON.parse(text.replace('```json', '').replace('```', ''));
+        saveToCache(cacheKey, parsed);
+        return parsed;
     } catch (error) {
         console.error('Error generating roadmap:', error);
-        
-        // Return a basic fallback roadmap structure
-        return {
-            modules: [
-                {
-                    title: "Getting Started",
-                    description: "Basic introduction to the course material",
-                    learningObjectives: ["Understand course structure", "Identify key topics"],
-                    keyTopics: syllabusText.split('\n')
-                        .filter(line => line.trim())
-                        .slice(0, 5)
-                        .map(line => line.trim()),
-                    resources: Array(5).fill(null),
-                    estimatedDuration: "1-2 weeks",
-                    order: 1
-                }
-            ]
-        };
+        throw error;
     }
 }
 
-export async function generateFlashcards(topic, content) {
-    const cacheKey = `flashcards_${btoa(topic + content.slice(0, 100))}`;
+export async function validateFlashcardRequest(params) {
+    const errors = [];
+    
+    if (!params.topic) {
+        errors.push('Topic is required');
+    }
+
+    if (params.difficulty && !['beginner', 'intermediate', 'advanced'].includes(params.difficulty)) {
+        errors.push('Invalid difficulty level');
+    }
+
+    return errors;
+}
+
+export async function generateFlashcards(topic, difficulty = 'intermediate', numCards = 10) {
+    const errors = await validateFlashcardRequest({ topic, difficulty, numCards });
+    if (errors.length > 0) {
+        console.log("errors", errors);
+        throw new Error(errors.join(', '));
+    }
+
+    const cacheKey = `flashcards_${btoa(topic)}`;
     const cached = getFromCache(cacheKey);
     if (cached) return cached;
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
         const prompt = `
-        Create a set of flashcards for studying ${topic} based on the following content:
-        ${content}
+        Generate ${numCards} flashcards on the topic '${topic}' with difficulty '${difficulty}'.
+        Follow these guidelines for maximum retention:
+        1. Use active recall
+        2. Phrase questions to promote thinking, not memorization
+        3. One concept per card
+        4. Keep prompts short and clear
+        5. Include 'why', 'how', or 'when' questions
+        6. Use fill-in-the-blank style for definitions and formulas
+        7. Mix different aspects of the topic
 
-        Format the response as a JSON array of flashcard objects:
-        [
-            {
-                "front": "Question or concept",
-                "back": "Answer or explanation",
-                "difficulty": "easy|medium|hard"
-            }
-        ]
-
-        Guidelines:
-        - Create 5-10 flashcards
-        - Vary the difficulty levels
-        - Keep questions clear and concise
-        - Include key concepts and definitions
-        - Ensure answers are comprehensive but not too long
-        `;
+        Format as JSON:
+        {
+            "flashcards": [
+                {
+                    "front_content": "question",
+                    "back_content": "answer",
+                    "hint": "optional hint"
+                }
+            ]
+        }`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const text = response.text();
+        console.log("flashcards response from gemini : ", response);
+        const parsed = JSON.parse(response.text().replace('```json', '').replace('```', ''));
+        console.log("parsed flashcards response from gemini : ", parsed);
 
-        try {
-            const parsed = JSON.parse(text);
-            saveToCache(cacheKey, parsed);
-            return parsed;
-        } catch (e) {
-            throw new Error("Failed to parse AI response into valid JSON");
-        }
+        // return the flashcard in the form of an array of objects
+        const flashcards = parsed.flashcards.map(card => ({
+            front_content: card.front_content,
+            back_content: card.back_content,
+            hint: card.hint || ''
+        }));
+
+        console.log("flashcards generated (ai.js) : ", flashcards);
+
+        saveToCache(cacheKey, parsed);
+        return parsed;
+
     } catch (error) {
         console.error('Error generating flashcards:', error);
-
-        // Return basic fallback flashcards
-        return [
-            {
-                front: `What is ${topic}?`,
-                back: "Review the content and create your own definition",
-                difficulty: "medium"
-            },
-            {
-                front: `List key components of ${topic}`,
-                back: "Break down the content into main points",
-                difficulty: "medium"
-            }
-        ];
+        throw error;
     }
 }
