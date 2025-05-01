@@ -7,7 +7,7 @@
         <div class="flex items-center space-x-6 text-sm">
             <div class="flex items-center text-gray-600">
                 <span class="font-semibold text-indigo-600">{$userStats.pendingTasks}</span>
-                <span class="ml-1">pending tasks</span>
+                <span class="ml-1">{$userStats.pendingTasks === 1 ? 'pending task' : 'pending tasks'}</span>
             </div>
 
             <div class="w-1 h-1 bg-gray-300 rounded-full"></div>
@@ -21,14 +21,14 @@
 
             <div class="flex items-center text-gray-600">
                 <span class="font-semibold text-indigo-600">{$userStats.completedTasks}</span>
-                <span class="ml-1">tasks completed</span>
+                <span class="ml-1">{$userStats.completedTasks === 1 ? 'task completed' : 'tasks completed'}</span>
             </div>
 
             <div class="w-1 h-1 bg-gray-300 rounded-full"></div>
 
             <div class="flex items-center text-gray-600">
                 <span class="font-semibold text-indigo-600">{$userStats.activeCourses}</span>
-                <span class="ml-1">active courses</span>
+                <span class="ml-1">{$userStats.activeCourses === 1 ? 'active course' : 'active courses'}</span>
             </div>
         </div>
     </div>
