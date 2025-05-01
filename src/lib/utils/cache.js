@@ -1,7 +1,9 @@
 import { browser } from '$app/environment';
+import { writable } from 'svelte/store';
 
-const CACHE_PREFIX = 'sb_cache_';
-const DEFAULT_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_PREFIX = 'gribbin_cache_';
+// set default expiry time for cache as 24 hours
+const DEFAULT_EXPIRY = 24 * 60 * 60 * 1000;
 
 export function setCache(key, value, expiryMs = DEFAULT_EXPIRY) {
     if (!browser) return;
@@ -13,6 +15,7 @@ export function setCache(key, value, expiryMs = DEFAULT_EXPIRY) {
     };
 
     localStorage.setItem(`${CACHE_PREFIX}${key}`, JSON.stringify(item));
+    console.log(`Cache set for key: ${key}`, item);
 }
 
 export function getCache(key) {
@@ -66,7 +69,7 @@ export function initializeCache() {
         if (key.startsWith(CACHE_PREFIX)) {
             try {
                 const item = JSON.parse(localStorage.getItem(key));
-                if (Date.now() - item.timestamp > item.expiry) {
+                if ((Date.now() - item.timestamp) > item.expiry) {
                     localStorage.removeItem(key);
                 }
             } catch {
@@ -74,6 +77,48 @@ export function initializeCache() {
             }
         }
     });
+}
+
+export function createCachedStore(key, initialValue, fetchFn) {
+    const store = writable(initialValue);
+    const { subscribe, set } = store;
+
+    // Try to load from cache first
+    if (browser) {
+        const cachedValue = getCache(key);
+        if (cachedValue !== null) {
+            set(cachedValue);
+        }
+    }
+
+    // If we have a fetch function, use it to initialize the store
+    if (fetchFn) {
+        fetchFn().then(value => {
+            set(value);
+            if (browser) {
+                setCache(key, value);
+            }
+        });
+    }
+
+    return {
+        subscribe,
+        set: (value) => {
+            set(value);
+            if (browser) {
+                setCache(key, value);
+            }
+        },
+        update: (fn) => {
+            store.update(value => {
+                const newValue = fn(value);
+                if (browser) {
+                    setCache(key, newValue);
+                }
+                return newValue;
+            });
+        }
+    };
 }
 
 // Initialize cache cleanup when module is imported
