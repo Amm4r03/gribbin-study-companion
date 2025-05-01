@@ -12,7 +12,7 @@
   };
 
   const navItems = [
-    { href: '/', label: 'Dashboard', icon: '📊' },
+    { href: '/dashboard', label: 'Dashboard', icon: '📊' },
     { href: '/courses', label: 'Courses', icon: '📚' },
     { href: '/roadmaps', label: 'Roadmaps', icon: '🗺️' },
     { href: '/flashcards', label: 'Flashcards', icon: '🎴' },
@@ -64,7 +64,7 @@
   </nav>
 
   <!-- Queue Status -->
-  {#if pendingChanges > 0}
+  <!-- {#if pendingChanges > 0}
     <div class="rounded-lg bg-yellow-50 p-4 mx-4 my-2">
       <div class="flex">
         <div class="flex-shrink-0">
@@ -79,7 +79,7 @@
         </div>
       </div>
     </div>
-  {/if}
+  {/if} -->
 
   <!-- User Section -->
   <div class="absolute bottom-0 w-full border-t p-4">
