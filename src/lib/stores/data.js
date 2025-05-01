@@ -33,10 +33,50 @@ export const roadmaps = createCachedStore('roadmaps', [], async () => {
         `)
         .eq('user_id', currentUserId)
         .order('created_at', { ascending: false });
+    
+    console.log('Roadmaps:', data);
 
     if (error) throw error;
     return data || [];
 });
+
+// Tasks Store
+export const tasks = createCachedStore('tasks', [], async () => {
+    if (!currentUserId) return [];
+    
+    const { data, error } = await supabase
+        .from('tasks')
+        .select(`
+            *,
+            course:courses (
+                id,
+                title
+            )
+        `)
+        .eq('user_id', currentUserId)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+});
+
+export const pomodoros = createCachedStore('pomodoros', [], async () => {
+    if (!currentUserId) return [];
+
+    const {data, error} = await supabase
+        .from('pomodoro_sessions')
+        .select(`*,
+                courses:courses(
+                id,
+                title
+            )
+        `)
+        .eq('user_id', currentUserId)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+})
 
 // User Stats Store
 export const userStats = createCachedStore('user_stats', {
@@ -92,8 +132,8 @@ export const userStats = createCachedStore('user_stats', {
 });
 
 // Refresh all stores when user changes
-user.subscribe(() => {
-    courses.refresh();
-    roadmaps.refresh();
-    userStats.refresh();
-});
+// user.subscribe(() => {
+//     courses.refresh();
+//     roadmaps.refresh();
+//     userStats.refresh();
+// });
