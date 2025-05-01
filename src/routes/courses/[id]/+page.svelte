@@ -6,6 +6,10 @@
     import { courses } from '$lib/stores/data';
     import { addToQueue } from '$lib/utils/queue';
     import StatsFooter from '$lib/components/StatsFooter.svelte';
+    import { user } from "$lib/stores/auth";
+
+    let currentUserId = null;
+    user.subscribe(value => currentUserId = value?.id);
 
     let course = null;
     let loading = true;
@@ -68,9 +72,8 @@
                 .from('roadmaps')
                 .insert({
                     course_id: course.id,
-                    user_id: course.user_id,
                     title: `${course.title} - Learning Roadmap`,
-                    content: JSON.stringify(roadmap),
+                    description: JSON.stringify(roadmap),
                     is_course_related: true
                 });
 
