@@ -13,20 +13,25 @@ export const load = async ({ url, error }) => {
         };
     }
 
-    if (get(isLoading)) {
+    const loadingState = get(isLoading);
+    const currentUser = get(user);
+    const isPublicRoute = publicRoutes.includes(url.pathname);
+
+    // During loading, return loading state without redirecting
+    if (loadingState) {
         return {
-            loading: true
+            loading: true,
+            user: currentUser // Keep any existing user data during loading
         };
     }
 
-    const isPublicRoute = publicRoutes.includes(url.pathname);
-    const isAuthenticated = !!get(user);
-
-    if (!isPublicRoute && !isAuthenticated) {
-        throw redirect(303, '/');
+    // Only redirect if we're certain the user is not authenticated and trying to access a protected route
+    if (!isPublicRoute && !currentUser) {
+        throw redirect(303, '/auth');  // Redirect to auth page instead of landing
     }
 
     return {
-        user: get(user)
+        loading: false,
+        user: currentUser
     };
 };
