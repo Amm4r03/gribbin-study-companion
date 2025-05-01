@@ -19,7 +19,7 @@ export function initializeSync() {
         if ($user) {
             syncInterval = setInterval(() => {
                 if (document.visibilityState === 'visible') {
-                    refreshAllData();
+                    // refreshAllData();
                 }
             }, SYNC_INTERVAL);
 
@@ -27,7 +27,7 @@ export function initializeSync() {
             window.addEventListener('online', async () => {
                 try {
                     await processQueue();
-                    await refreshAllData();
+                    // await refreshAllData();
                 } catch (error) {
                     console.error('Error processing queue:', error);
                 }
