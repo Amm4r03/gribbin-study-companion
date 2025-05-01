@@ -45,7 +45,7 @@
             if (result.error) throw result.error;
             
             // Refresh cached courses
-            courses.refresh();
+            // courses.refresh();
             resetForm();
         } catch (err) {
             error = err.message;
@@ -65,7 +65,7 @@
                 .eq('id', id);
 
             if (err) throw err;
-            courses.refresh();
+            // courses.refresh();
         } catch (err) {
             error = err.message;
         } finally {
