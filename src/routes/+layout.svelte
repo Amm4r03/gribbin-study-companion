@@ -4,6 +4,7 @@
     import Navbar from '$lib/components/navbar.svelte';
     import Sidebar from '$lib/components/sidebar.svelte';
     import StatsFooter from '$lib/components/StatsFooter.svelte';
+    import { page as PageData } from '$app/state';
 
     let {
         data
@@ -14,6 +15,27 @@
     // Show sidebar only on authenticated routes except landing page
     let showSidebar = $derived(user && $page.url.pathname !== '/');
 </script>
+
+<svelte:head>
+    <title>{PageData.url.pathname === '/' ? "" : (PageData.url.pathname.replace('/', '').trim()).slice(0,1).toUpperCase() + (PageData.url.pathname.replace('/', '').trim()).slice(1,(PageData.url.pathname.replace('/', '').trim()).length) + " - "} Gribbin</title>
+    <meta name="description" content="AI powered study companion" />
+    <meta name="title" content="Gribbin" />
+
+    <!-- facebook SEO -->
+    <meta property="og:title" content="Gribbin" />
+    <meta property="og:description" content="AI powered study companion application" />
+    <meta property="og:image" content="%sveltekit.assets%/favicon.png" />
+    <meta property="og:url" content="%sveltekit.url%" />
+    
+    <meta name="author" content="Ammar" />
+
+    <meta name="keywords" content="AI, study, flashcards, roadmaps, companion, application" />
+
+    <meta property="og:type" content="website" />
+	<meta property="og:site_name" content="Gribbin" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:locale:alternate" content="en_IN" />
+</svelte:head>
 
 {#if loading}
     <div class="flex min-h-screen items-center justify-center">
