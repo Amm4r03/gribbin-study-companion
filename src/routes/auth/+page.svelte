@@ -3,12 +3,15 @@
     import { supabase } from '$lib/supabase';
     import { goto } from '$app/navigation';
     import { onMount } from 'svelte';
+	import { slide } from 'svelte/transition';
+	import { isFileServingAllowed } from 'vite';
 
-    let email = '';
-    let password = '';
-    let loading = false;
-    let error = null;
-    let isSignUp = false;
+    let email = $state('');
+    let password = $state('');
+    let loading = $state(false);
+    let error = $state(null);
+    let isSignUp = $state(false);
+    let statusMessage = $state('');
 
     onMount(() => {
         if ($user) {
@@ -27,6 +30,7 @@
                     password,
                 });
                 if (err) throw err;
+                statusMessage = 'Check your mail for a confirmation link';
             } else {
                 const { error: err } = await supabase.auth.signInWithPassword({
                     email,
@@ -35,7 +39,11 @@
                 if (err) throw err;
             }
             
-            goto('/');
+            // head to the auth page after 10 seconds 
+            setTimeout(() => {
+                statusMessage = '';
+                goto('/');
+            }, 5000);
         } catch (err) {
             error = err.message;
         } finally {
@@ -89,9 +97,15 @@
                 </p>
             </div>
 
+            {#if statusMessage}
+                <div class="rounded-md bg-green-50 p-4 text-sm text-green-700" transition:slide>
+                    {statusMessage}
+                </div>
+            {/if}
+
             <form class="mt-8 space-y-6" on:submit|preventDefault={handleAuth}>
                 {#if error}
-                    <div class="rounded-md bg-red-50 p-4 text-sm text-red-700">
+                    <div class="rounded-md bg-red-50 p-4 text-sm text-red-700" transition:slide>
                         {error}
                     </div>
                 {/if}
