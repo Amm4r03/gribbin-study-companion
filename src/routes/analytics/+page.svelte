@@ -46,8 +46,8 @@
                 .from('study_logs')
                 .select('*')
                 .eq('user_id', $user.id)
-                .gte('started_at', startDate.toISOString())
-                .order('started_at');
+                // .gte('started_at', startDate.toISOString())
+                .order('date');
 
             if (logsError) throw logsError;
 
@@ -65,7 +65,7 @@
                 .from('pomodoro_sessions')
                 .select('*')
                 .eq('user_id', $user.id)
-                .gte('created_at', startDate.toISOString());
+                .gte('started_at', startDate.toISOString());
 
             if (pomodoroError) throw pomodoroError;
 
@@ -85,7 +85,7 @@
 
             // Calculate statistics
             const totalHours = studyLogs.reduce((acc, log) => {
-                const duration = new Date(log.ended_at) - new Date(log.started_at);
+                const duration = new Date(log.ended_at) - new Date(log.date);
                 return acc + (duration / (1000 * 60 * 60));
             }, 0);
 
