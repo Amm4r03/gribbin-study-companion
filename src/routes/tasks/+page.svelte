@@ -365,7 +365,14 @@
                                 {/if}
                                 {#if task.due_date}
                                     <span class="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
-                                        Due {formatDate(task.due_date)}
+                                        Due {formatDate(task.due_date)} | {(() => {
+                                            const today = new Date();
+                                            const dueDate = new Date(task.due_date);
+                                            const diffDays = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
+                                            if (diffDays === 0) return 'Today';
+                                            if (diffDays > 0) return `${diffDays} days to go`;
+                                            return `${Math.abs(diffDays)} days overdue`;
+                                        })()}
                                     </span>
                                 {/if}
                             </div>
