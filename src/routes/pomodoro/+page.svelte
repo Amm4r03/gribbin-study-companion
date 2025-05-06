@@ -17,6 +17,10 @@
     let currentCycle = $state(1);
     let isBreak = $state(false);
     let timeLeft = $derived(workDuration * 60);
+    let interruptions = $state(0);
+
+    let startTime = $state(null);
+    let endTime = $state(null);
     // let timeLeft = workDuration * 60;
     let timer;
 
@@ -37,6 +41,7 @@
         
         isRunning = true;
         error = null;
+        startTime = new Date().toISOString();
         
         timer = setInterval(() => {
             if (timeLeft > 0) {
@@ -66,6 +71,7 @@
 
     function pauseTimer() {
         isRunning = false;
+        interruptions++;
         clearInterval(timer);
     }
 
@@ -91,19 +97,22 @@
                 .from('pomodoro_sessions')
                 .insert({
                     user_id: $user.id,
-                    title,
-                    course_id: selectedCourseId || null,
+                    notes : title,
+                    course_id: selectedCourseId ||   null,
                     work_duration: workDuration,
                     break_duration: breakDuration,
-                    cycles_completed: currentCycle,
-                    total_cycles: cycles,
-                    total_duration: (workDuration * cycles + breakDuration * (cycles - 1))
+                    started_at : startTime,
+                    completed : true,
+                    ended_at : new Date().toISOString(),
+                    interruptions: interruptions,
+                    // total_duration: (workDuration * cycles + breakDuration * (cycles - 1))
                 });
 
             if (err) throw err;
 
             successMessage = "Session completed and saved!";
             setTimeout(() => {
+                interruptions = 0;
                 successMessage = null;
             }, 3000);
 
