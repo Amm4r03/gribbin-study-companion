@@ -299,7 +299,9 @@
                                     ×
                                 </button>
                             </div>
-                            <h3 class="text-lg font-medium text-gray-900">{roadmap.title}</h3>
+                            <h3 class="text-lg font-medium text-gray-900">
+                                {roadmap.title.length > 50 ? roadmap.title.slice(0, 50) + '...' : roadmap.title}
+                            </h3>
                             {#if roadmap.course?.title}
                                 <p class="mt-1 text-sm text-indigo-600">{roadmap.course.title}</p>
                             {/if}
@@ -335,7 +337,9 @@
                                     ×
                                 </button>
                             </div>
-                            <h3 class="text-lg font-medium text-gray-900">{roadmap.title}</h3>
+                            <h3 class="text-lg font-medium text-gray-900">
+                                {roadmap.title.length > 50 ? roadmap.title.slice(0, 50) + '...' : roadmap.title}
+                            </h3>
                             <div class="mt-4">
                                 <div class="text-sm text-gray-500">
                                     Created {new Date(roadmap.created_at).toLocaleDateString()}

@@ -194,7 +194,7 @@
         <div>
             <div class="flex items-start justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">{roadmap.title}</h1>
+                    <h1 class="text-2xl font-bold text-gray-900" title={roadmap.title}>{roadmap.title.length > 50 ? roadmap.title.slice(0, 50) + '...' : roadmap.title}</h1>
                     {#if roadmap.course?.title}
                         <p class="mt-1 text-lg text-indigo-600">From: {roadmap.course.title}</p>
                     {/if}
