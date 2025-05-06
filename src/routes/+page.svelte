@@ -103,7 +103,7 @@
                     <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl lg:text-7xl">
                         Gribbin
                         <span class="mt-4 block bg-gradient-to-r from-indigo-600 to-purple-600 hover:hue-rotate-60 duration-700 bg-clip-text text-transparent">
-                            Your AI-Powered Learning Companion
+                            Personalised AI-Powered Learning Companion
                         </span>
                     </h1>
                     <p class="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-600">
