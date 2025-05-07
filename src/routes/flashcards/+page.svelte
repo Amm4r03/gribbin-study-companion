@@ -193,6 +193,7 @@
     }
 
     // Load data on mount
+    // onMount(() => {loadFlashcardSets()});
     onMount(loadFlashcardSets);
 </script>
 
