@@ -3,7 +3,9 @@ import { redirect } from '@sveltejs/kit';
 import { get } from 'svelte/store';
 import { handleError } from '$lib/utils/errors';
 
-const publicRoutes = ['/', '/auth'];
+const publicRoutes = ['/', '/auth', '/share', '/share/roadmaps/[id]/view'].map(route => {
+    return route.replace('[id]', '[a-zA-Z0-9-]+');
+});
 
 export const load = async ({ url, error }) => {
     // Handle any errors passed from child routes
@@ -26,7 +28,7 @@ export const load = async ({ url, error }) => {
     }
 
     // Only redirect if we're certain the user is not authenticated and trying to access a protected route
-    if (!isPublicRoute && !currentUser) {
+    if (!isPublicRoute && !currentUser && !url.pathname.startsWith('/share/roadmaps')) {
         throw redirect(303, '/auth');  // Redirect to auth page instead of landing
     }
 
