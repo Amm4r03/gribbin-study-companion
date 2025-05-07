@@ -12,6 +12,7 @@
 
     let roadmap = null;
     let loading = true;
+    let saving = false;
     let error = null;
     let totalProgress = 0;
     let parsedContent = null;
@@ -149,6 +150,56 @@
         }
     }
 
+    // BRUTE FORCE APPROACH - WILL WASTE DB SPACE
+    // async function savePublicRoadmap() {
+    //     try {
+    //         saving = true;
+    //         const { error: err } = await supabase
+    //             .from('roadmaps')
+    //             .insert({
+    //                 title: roadmap.title,
+    //                 description: roadmap.description,
+    //                 user_id: currentUserId,
+    //                 is_public: false,
+    //                 original_roadmap_id: roadmap.id
+    //             });
+
+    //         if (err) throw err;
+    //         window.location.href = '/roadmaps';
+    //     } catch (err) {
+    //         error = err.message;
+    //         console.error('Error saving roadmap:', err);
+    //     } finally {
+    //         saving = false;
+    //     }
+    // }
+
+    // saving only what is necessary - access the roadmap for new user from the original source for that particular roadmap
+    async function savePublicRoadmap() {
+        try {
+            saving = true;
+            const { error: err } = await supabase
+                .from('roadmaps')
+                .insert({
+                    user_id: currentUserId,
+                    is_public: false,
+                    original_roadmap_id: roadmap.id,
+                    created_at : new Date().toISOString(),
+                    // Only store unique/changed data, reference original for other fields
+                    progress: {} // Initialize empty progress for the new user
+                });
+
+            if (err) throw err;
+            window.location.href = '/roadmaps';
+        } catch (err) {
+            error = err.message;
+            console.error('Error saving roadmap:', err);
+        } finally {
+            saving = false;
+        }
+    }
+
+
     onMount(() => {
         if (!currentUserId) {
             error = "You must be logged in to view this roadmap.";
@@ -160,6 +211,10 @@
         }
     });
 </script>
+
+<svelte:head>
+    <title>{(roadmap.title).replace(" - Learning Roadmap", " Roadmap")} | Gribbin</title>
+</svelte:head>
 
 <div class="space-y-8">
     {#if loading}
@@ -200,6 +255,23 @@
                     {/if}
                 </div>
                 <div class="flex gap-4">
+                    {#if roadmap.original_roadmap_id}
+                        <p class="text-sm text-gray-500 mt-2">Saved from a shared roadmap</p>
+                    {:else}
+                    <!-- no need to save the roadmap if the user is already the original creator for the roadmap -->
+                    {#if $user.id == roadmap.user_id}
+                        <div class="text-sm text-center items-center flex flex-col justify-center text-gray-500 hidden md:flex">
+                            your roadmap
+                        </div>
+                        {:else}
+                        <button
+                            on:click={savePublicRoadmap}
+                            class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+                        >
+                            Save to My Roadmaps
+                        </button>
+                    {/if}
+                    {/if}
                     <button
                         on:click={() => showCreateFlashcards = !showCreateFlashcards}
                         class="rounded-md bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-600 hover:bg-indigo-100"
@@ -210,7 +282,7 @@
                         href="/roadmaps"
                         class="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
                     >
-                        Back to Roadmaps
+                        Back to My Roadmaps
                     </a>
                 </div>
             </div>
