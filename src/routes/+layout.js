@@ -3,7 +3,7 @@ import { redirect } from '@sveltejs/kit';
 import { get } from 'svelte/store';
 import { handleError } from '$lib/utils/errors';
 
-const publicRoutes = ['/', '/auth', '/share', '/share/roadmaps/[id]/view'].map(route => {
+const publicRoutes = ['/', '/auth', '/share/roadmaps/[id]/view'].map(route => {
     return route.replace('[id]', '[a-zA-Z0-9-]+');
 });
 
