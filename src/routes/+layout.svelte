@@ -17,6 +17,7 @@
 </script>
 
 <svelte:head>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="83a06199-c8e1-43be-be93-cdf1739dc15d"></script>
     <title>{PageData.url.pathname === '/' ? "" : (PageData.url.pathname.replace('/', '').trim()).slice(0,1).toUpperCase() + (PageData.url.pathname.replace('/', '').trim()).slice(1,(PageData.url.pathname.replace('/', '').trim()).length) + " - "} Gribbin</title>
     <meta name="description" content="AI powered study companion" />
     <meta name="title" content="Gribbin" />
