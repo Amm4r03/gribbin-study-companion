@@ -4,7 +4,6 @@
     import { goto } from '$app/navigation';
     import { onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
-	import { isFileServingAllowed } from 'vite';
 
     let email = $state('');
     let password = $state('');
