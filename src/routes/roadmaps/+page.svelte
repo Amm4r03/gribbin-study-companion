@@ -139,22 +139,46 @@
         }
     }
 
+    async function makeRoadmapPublic(roadmapId) {
+        try {
+            loading = true;
+            const { error: err } = await supabase
+                .from('roadmaps')
+                .update({ is_public: true })
+                .eq('id', roadmapId);
+
+            if (err) throw err;
+
+            // Show success message with share link
+            const shareLink = `${window.location.origin}/share/roadmaps/${roadmapId}/view`;
+            navigator.clipboard.writeText(shareLink);
+            alert('Share link copied to clipboard!');
+        } catch (err) {
+            error = err.message;
+        } finally {
+            loading = false;
+        }
+    }
+
     $: courseRoadmaps = $roadmaps.filter(r => r.is_course_related);
     $: independentRoadmaps = $roadmaps.filter(r => !r.is_course_related);
 </script>
 
 <div class="space-y-8">
+    <!-- Only show form and generate button for authenticated users -->
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Learning Roadmaps</h1>
             <p class="mt-1 text-sm text-gray-500">Track your learning progress with AI-generated study paths</p>
         </div>
-        <button
-            on:click={() => showForm = !showForm}
-            class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
-        >
-            {showForm ? 'Cancel' : 'Generate Roadmap'}
-        </button>
+        {#if $user}
+            <button
+                on:click={() => showForm = !showForm}
+                class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+            >
+                {showForm ? 'Cancel' : 'Generate Roadmap'}
+            </button>
+        {/if}
     </div>
 
     {#if error}
@@ -163,7 +187,7 @@
         </div>
     {/if}
 
-    {#if showForm}
+    {#if showForm && $user}
         <div class="rounded-lg bg-white p-6 shadow-sm animate-in slide-in-from-top" transition:fade>
             <h2 class="text-lg font-semibold text-gray-900">Generate New Roadmap</h2>
             <div class="mt-4 grid gap-6">
@@ -291,10 +315,20 @@
                             href="/roadmaps/{roadmap.id}"
                             class="group relative overflow-hidden rounded-lg bg-white p-6 shadow-sm transition-all hover:shadow-md {roadmap.loading ? 'animate-pulse' : ''}"
                         >
-                            <div class="absolute right-2 top-2 opacity-0 group-hover:opacity-100">
+                            <div class="absolute right-2 top-2 flex gap-2 opacity-0 group-hover:opacity-100">
+                                <button
+                                    on:click|preventDefault={() => makeRoadmapPublic(roadmap.id)}
+                                    class="rounded p-1 text-gray-400 hover:bg-indigo-50 hover:text-indigo-500"
+                                    title="Share Roadmap"
+                                >
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                                    </svg>
+                                </button>
                                 <button
                                     on:click|preventDefault={() => deleteRoadmap(roadmap.id)}
                                     class="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                                    title="Delete Roadmap"
                                 >
                                     ×
                                 </button>
@@ -329,10 +363,20 @@
                             href="/roadmaps/{roadmap.id}"
                             class="group relative overflow-hidden rounded-lg bg-white p-6 shadow-sm transition-all hover:shadow-md {roadmap.loading ? 'animate-pulse' : ''}"
                         >
-                            <div class="absolute right-2 top-2 opacity-0 group-hover:opacity-100">
+                            <div class="absolute right-2 top-2 flex gap-2 opacity-0 group-hover:opacity-100">
+                                <button
+                                    on:click|preventDefault={() => makeRoadmapPublic(roadmap.id)}
+                                    class="rounded p-1 text-gray-400 hover:bg-indigo-50 hover:text-indigo-500"
+                                    title="Share Roadmap"
+                                >
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                                    </svg>
+                                </button>
                                 <button
                                     on:click|preventDefault={() => deleteRoadmap(roadmap.id)}
                                     class="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                                    title="Delete Roadmap"
                                 >
                                     ×
                                 </button>
